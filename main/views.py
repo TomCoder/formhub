@@ -199,6 +199,12 @@ def show(request, username=None, id_string=None, uuid=None):
     if xform.shared == False and not is_owner:
         return HttpResponseRedirect(reverse(home))
     context = RequestContext(request)
+    try:
+        XForm.objects.get(user__username=username, 
+            id_string=id_string + '_cloned')
+        context['cloned'] = True
+    except XForm.DoesNotExist:
+        context['cloned'] = True
     context.is_owner = is_owner
     context.xform = xform
     context.content_user = xform.user
@@ -291,6 +297,13 @@ def form_gallery(request):
     if request.user.is_authenticated():
         context.loggedin_user = request.user
     context.shared_forms = DataDictionary.objects.filter(shared=True)
+    dd= context.shared_forms.values_list('id_string')
+    context['cloned'] = []
+    for s in context.shared_forms:
+        if s.id_string + '_cloned' in dd and s.user.username == request.user.username:
+            context.cloned = {'cloned': True, 'id_string': s.id_string} 
+        else:
+            context.cloned = {'cloned': False, 'id_string': s.id_string}
     return render_to_response('form_gallery.html', context_instance=context)
 
 def download_metadata(request, username, id_string, data_id):
