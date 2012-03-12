@@ -10,6 +10,8 @@ var mapMarkerIcon = L.Icon.extend({
     iconAnchor: new L.Point(12, 24),
     popupAnchor: new L.Point(0,-24)
 });
+var layersControl = null;
+var baseLayers = {};
 
 function initialize() {
 
@@ -18,35 +20,34 @@ function initialize() {
 
     var geographyClass_url = 'http://a.tiles.mapbox.com/v3/modilabs.map-mn6m9gre.jsonp';
 
-    var baseLayers = {};
-
     // Make a new Leaflet map in your container div
     map = new L.Map(mapId).setView(centerLatLng, defaultZoom);
     addPoints();
 
     // Get metadata about the map from MapBox
+	wax.tilejson(mapboxStreets_url, function(tilejson) {
+        var mapboxStreets = new wax.leaf.connector(tilejson);
+        // Add MapBox Streets as a base layer
+        //.addLayer(new wax.leaf.connector(tilejson));
+        map.addLayer(mapboxStreets);
+        //	var googleSat = new L.Google();
+        //	map.addLayer(googleSat);
+	    baseLayers["MapBox Streets"] = mapboxStreets;
+        updateControls()
+    });
 
     wax.tilejson(geographyClass_url, function(tilejson) {
         var geographyClass = new wax.leaf.connector(tilejson);
         map.addLayer(geographyClass);
-	baseLayers["MapBox Geography Class"] = geographyClass;
-
-	wax.tilejson(mapboxStreets_url, function(tilejson) {
-            var mapboxStreets = new wax.leaf.connector(tilejson);
-            // Add MapBox Streets as a base layer
-            //.addLayer(new wax.leaf.connector(tilejson));
-            map.addLayer(mapboxStreets);
-            //	var googleSat = new L.Google();
-            //	map.addLayer(googleSat);
-	    baseLayers["MapBox Streets"] = mapboxStreets;
-	    layersControl = new L.Control.Layers(baseLayers);
-	    
-	    map.addControl(layersControl);
-	    
+        baseLayers["MapBox Geography Class"] = geographyClass;
+        updateControls()
 	});
+}
 
-    });
-    
+function updateControls() {
+    if (layersControl !== null) map.removeControl(layersControl);
+    layersControl = new L.Control.Layers(baseLayers);
+    map.addControl(layersControl);
 }
 
 function addPoints() {
