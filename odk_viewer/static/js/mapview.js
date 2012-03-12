@@ -12,23 +12,41 @@ var mapMarkerIcon = L.Icon.extend({
 });
 
 function initialize() {
+
     // mapbox streets formhub tiles
-    var url = 'http://a.tiles.mapbox.com/v3/modilabs.map-hgm23qjf.jsonp';
+    var mapboxStreets_url = 'http://a.tiles.mapbox.com/v3/modilabs.map-hgm23qjf.jsonp';
+
+    var geographyClass_url = 'http://a.tiles.mapbox.com/v3/modilabs.map-mn6m9gre.jsonp';
+
+    var baseLayers = {};
 
     // Make a new Leaflet map in your container div
     map = new L.Map(mapId).setView(centerLatLng, defaultZoom);
+    addPoints();
 
     // Get metadata about the map from MapBox
-    wax.tilejson(url, function(tilejson) {
-        var mapboxstreet = new wax.leaf.connector(tilejson);
-        // Add MapBox Streets as a base layer
-        //.addLayer(new wax.leaf.connector(tilejson));
-        map.addLayer(mapboxstreet);
-        //	var googleSat = new L.Google();
-        //	map.addLayer(googleSat);
-        map.addControl(new L.Control.Layers({'MapBox Streets':mapboxstreet}))
-        addPoints();
+
+    wax.tilejson(geographyClass_url, function(tilejson) {
+        var geographyClass = new wax.leaf.connector(tilejson);
+        map.addLayer(geographyClass);
+	baseLayers["MapBox Geography Class"] = geographyClass;
+
+	wax.tilejson(mapboxStreets_url, function(tilejson) {
+            var mapboxStreets = new wax.leaf.connector(tilejson);
+            // Add MapBox Streets as a base layer
+            //.addLayer(new wax.leaf.connector(tilejson));
+            map.addLayer(mapboxStreets);
+            //	var googleSat = new L.Google();
+            //	map.addLayer(googleSat);
+	    baseLayers["MapBox Streets"] = mapboxStreets;
+	    layersControl = new L.Control.Layers(baseLayers);
+	    
+	    map.addControl(layersControl);
+	    
+	});
+
     });
+    
 }
 
 function addPoints() {
